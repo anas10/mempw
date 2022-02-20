@@ -1,0 +1,67 @@
+#!/bin/bash
+die() {
+    echo >&2 "$@"
+    exit 1
+}
+
+function clearLine() {
+    tput dl1
+    echo
+    tput cuu1
+}
+
+function checkArguments() {
+    [ "$#" -eq 3 ] || return $?
+    echo $1 | grep -E -q '^[0-9]+$' && val1=$1 || die "Numeric argument required, $1 provided"
+    echo $2 | grep -E -q '^[0-9]+$' && val2=$2 || die "Numeric argument required, $2 provided"
+    echo $3 | grep -E -q '^[0-9]+$' && val3=$3 || die "Numeric argument required, $3 provided"
+}
+
+function askForNumbers() {
+    echo -n Positions:
+    IFS=" " read -a positions
+    checkArguments "${positions[@]}" || die "3 argument required, ${#positions[@]} provided"
+}
+
+function getPassword() {
+    echo -n
+    echo -n Password:
+    read -s password
+    clearLine
+}
+
+function displayResult() {
+    echo -n "[ ${password:$val1-1:1} ] [ ${password:$val2-1:1} ] [ ${password:$val3-1:1} ]"
+}
+
+function selfDestruct() {
+    x=3
+    echo -en "\nSelf destruct in $x"
+    while [ $x -ge 0 ]; do
+        echo -ne "\b$x"
+        sleep 1
+        x=$(($x - 1))
+    done
+
+    tput cuu1
+    tput dl1
+    if [ "$1" = true ]; then
+        tput cuu1
+        tput dl1
+    fi
+    clearLine
+}
+
+main() {
+    checkArguments $@ && (
+        getPassword
+        displayResult
+        selfDestruct false
+    ) || (
+        askForNumbers
+        getPassword
+        displayResult
+        selfDestruct true
+    )
+}
+main $@
